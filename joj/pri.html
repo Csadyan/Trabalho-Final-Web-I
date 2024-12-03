@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo Horda</title>
+  <link rel="stylesheet" href="styles/main.css">
+
+</head>
+<body>
+  <div id="menu">
+    <img src="logo.png" alt="" >
+    <button id="playButton">Jogar</button>
+    <button id="controlsButton">Controles</button>
+  </div>
+  <div id="controles">
+    <button id="returnButton">Voltar</button>
+    <img src="menucontroles.png" alt="">
+  </div>
+  <div id="gameOver">
+    <h1>Game Over!</h1>
+  </div>
+
+  <div id="Loja">
+    <h1>Loja</h1>
+    <table>
+      <thead>
+        <th>Item 1</th>
+        <th>Item 2</th>
+        <th>Item 3</th>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="item_health">Vida</td>
+          <td id="unlock_rifle">Desbloquear Metralhadora</td>
+          <td id="unlock_shotgun">Desbloquear Escopeta</td>
+        </tr>
+        <tr>
+          <td id="pistol_ammo">Muniçao de pistola x32</td>
+          <td id="rifle_ammo">Muniçao de rifle x24</td>
+          <td id="shotgun_ammo">Muniçao de escopeta x12</td>
+        </tr>
+      </tbody>
+      
+    </table>
+  </div>
+
+
+  <canvas id="gameCanvas"></canvas>
+
+</body>
+  <script src="scripts/main.js"></script>
+</html>

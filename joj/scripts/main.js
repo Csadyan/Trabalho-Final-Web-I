@@ -1,3 +1,8 @@
+
+// ---------------------------
+// ---------VARIAVEIS---------
+// ---------------------------
+
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 
@@ -43,7 +48,13 @@ let previous_ammo="pistol"
 let weaponisshotgun=false
 let isShooting = false;
 let canShoot = true;
+
 let shootingInterval = 600;
+let pistolshootingInterval=600;
+let rifleshootingInterval=150;
+let shotgunshootingInterval=900;
+
+
 
 let shootingSoundPath = 'SONS/ARMAS/_sub_tiro_unico.mp3';
 let menuSoundtrack = new Audio('SONS/soundtrack.mp3');
@@ -53,23 +64,32 @@ let currentWave = 0;
 let enemiesInWave = 12;
 let waveSpawned = false;
 let waveActive = false;
+let bossSpawned = false;
 
 let storeIsOpen = false
+let rifleIsUnlocked = false
+let shotgunIsUnlocked = false
 
 const enemyKnockback = 55;
 
-let money = 100
+let money = 100;
 let waveTimer = 0;
 let timerInterval;
 let waveCountdown = 5;
 const playerImg = new Image();
-playerImg.src = "player.png";
+playerImg.src = "images/player.png";
 
 
-const backgroundImg = new Image();
-backgroundImg.src = 'background.png';  
+let backgroundImg = new Image();
+backgroundImg.src = 'images/background.png';  
 
 function drawBackground() {
+  if (currentWave>=10){
+    backgroundImg.src="images/caverna_background.png"
+  }
+  if (currentWave>=20){
+    backgroundImg.src="images/inferno_background.png"
+  }
   context.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height); 
 }
 
@@ -112,8 +132,8 @@ function shootProjectile(isshotgun = false) {
   
   
     for (let i = 0; i < numProjectiles; i++) {
-      const angleOffset = (i - Math.floor(numProjectiles / 2)) * spread; // Calculate angle offset for each projectile
-      const angle = baseAngle + angleOffset; // Adjust the base angle
+      const angleOffset = (i - Math.floor(numProjectiles / 2)) * spread; 
+      const angle = baseAngle + angleOffset; 
   
       const velocity = {
         x: Math.cos(angle) * 7,
@@ -142,24 +162,27 @@ document.addEventListener('keydown', function(event) {
   }
 
   if (event.key === '1') {
-    playerImg.src = "player.png";
-    shootingInterval=600;
+    shootingSoundPath = 'SONS/ARMAS/_sub_tiro_unico.mp3';
+    playerImg.src = "images/player.png";
+    shootingInterval=pistolshootingInterval;
     current_ammo=pistol_ammo;
     previous_ammo="pistol"
     weaponisshotgun=false;
   }
-  if (event.key === '2') {
-    playerImg.src = "Player_rifle.png";
-    shootingInterval=150;
+  if (event.key === '2' && rifleIsUnlocked === true) {
+    shootingSoundPath = 'SONS/ARMAS/_machinegun_unico.mp3'
+    playerImg.src = "images/Player_rifle.png";
+    shootingInterval=rifleshootingInterval;
     current_ammo=rifle_ammo;
     previous_ammo="rifle"
     weaponisshotgun=false;
   }
-  if (event.key === '3') {
-    playerImg.src = "Player_shotgun.png";
+  if (event.key === '3' && shotgunIsUnlocked === true) {
+    shootingSoundPath = 'SONS/ARMAS/_shotgun_unico.mp3'
+    playerImg.src = "images/Player_shotgun.png";
     current_ammo=shotgun_ammo;
     previous_ammo="shotgun"
-    shootingInterval=900;
+    shootingInterval=shotgunshootingInterval;
     weaponisshotgun=true;
   }
 
@@ -183,6 +206,9 @@ function openStore() {
 
 function startWaveTimer() {
   waveTimer = 5;
+  if (currentWave%5==0){
+    waveTimer = 30
+  }
   timerInterval = setInterval(() => {
     waveTimer--;
     if (waveTimer <= 0) {
@@ -192,6 +218,14 @@ function startWaveTimer() {
   }, 1000);
 }
 
+function displayHUD(){
+  drawHealth();
+  displayWaveTimer();
+  displayAmmoCount();
+  displayEnemyCount();
+  displayWaveCount();
+  displayMoneyCount();
+}
 
 function displayAmmoCount() {
   context.fillStyle = 'black';
@@ -231,12 +265,16 @@ function displayWaveTimer() {
 const enemyImages = {};
 const enemyTypes = ['normal', 'blue', 'red', 'yellow'];
 
+
+
+
 function preloadImages() {
   enemyTypes.forEach(type => {
     const img = new Image();
-    img.src = `enemy${enemyTypes.indexOf(type) + 1}.png`;
+    img.src = `images/enemy${enemyTypes.indexOf(type) + 1}.png`;
     enemyImages[type] = img;
   });
+
 }
 
 preloadImages(); 
@@ -277,7 +315,6 @@ function spawnEnemy() {
     y:y,
     width: 30,
     height: 30,
-    height: 30,
     speed: 1,
     health: 2+ currentWave/4,
     type: enemyType,
@@ -295,36 +332,19 @@ function spawnEnemy() {
     enemy.canShoot = true;
   }
 
-  enemies.push(enemy);
-}
-
-function spawnEnemyAtPosition(x, y) {
-  const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
-
-  const enemy = {
-    x: x,
-    y: y,
-    width: 30,
-    height: 30,
-    speed: 1,
-    health: 2+ currentWave/4,
-    type: enemyType,
-    canMove: true
-  };
-
-  if (enemyType === 'blue') {
-    enemy.speed = 2;
-    enemy.health = 1 + currentWave/5;
-  } else if (enemyType === 'red') {
-    enemy.speed = 0.5;
-    enemy.health = 5+ currentWave/3;
-  } else if (enemyType === 'yellow') {
-    enemy.range = 300;
-    enemy.canShoot = true;
+  if (currentWave==30 && bossSpawned==false) {
+    enemy.width=90;
+    enemy.height=80;
+    enemy.speed = 2.5;
+    enemy.health = 1000;
+    enemy.canShoot = false;
+    bossSpawned=true;
   }
 
   enemies.push(enemy);
 }
+
+
 
 function drawPlayer() {
   const angle = Math.atan2(mouse.y - (player.y + player.height / 2), mouse.x - (player.x + player.width / 2));
@@ -422,16 +442,6 @@ function shootEnemyProjectile(enemy) {
   });
 }
 
-function updatePlayerMovement() {
-  if (keys.w) player.y -= player.speed;
-  if (keys.s) player.y += player.speed;
-  if (keys.a) player.x -= player.speed;
-  if (keys.d) player.x += player.speed;
-
-  player.x = Math.max(0, Math.min(player.x, canvas.width - player.width));
-  player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
-}
-
 function drawEnemies() {
   enemies.forEach((enemy, enemyIndex) => {
     const angle = Math.atan2(player.y + player.height / 2 - enemy.y, player.x + player.width / 2 - enemy.x);
@@ -489,6 +499,25 @@ function drawEnemies() {
   });
 }
 
+
+function updatePlayerMovement() {
+  if (keys.w) player.y -= player.speed;
+  if (keys.s) player.y += player.speed;
+  if (keys.a) player.x -= player.speed;
+  if (keys.d) player.x += player.speed;
+
+  player.x = Math.max(0, Math.min(player.x, canvas.width - player.width));
+  player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
+}
+
+
+
+// ---------------------------
+// ---------UPDATE-GAME-------
+// ---------------------------
+
+
+
 function gameOver() {
   stopWaveTimer();
   document.getElementById('gameOver').style.display = 'block';
@@ -501,16 +530,12 @@ function updateGame() {
     inGameMusic.play()
     updatePlayerMovement();
     drawPlayer();
-    drawHealth();
     drawMousePointer();
     drawProjectiles();
     drawEnemyProjectiles();
     drawEnemies();
     displayWaveTimer();
-    displayAmmoCount();
-    displayEnemyCount();
-    displayWaveCount();
-    displayMoneyCount();
+    displayHUD()
     if (isShooting && canShoot) {
       shootProjectile(weaponisshotgun);
       canShoot = false;
@@ -527,12 +552,20 @@ function updateGame() {
 }
 
 
+
+// ---------------------------
+// ---------MENU--------------
+// ---------------------------
+
+
+
 window.onload = function() {
   menuSoundtrack.play()
 };
 
 document.getElementById('playButton').addEventListener('click', () => {
   document.getElementById('menu').style.display = 'none';
+  document.getElementById('controles').style.display = 'none';
   menuSoundtrack.pause();
   canvas.style.display = 'block';
   updateGame();
@@ -547,3 +580,99 @@ document.getElementById('returnButton').addEventListener('click', () => {
   document.getElementById('menu').style.display = 'flex';
   document.getElementById('controles').style.display = 'none';
 });
+
+
+
+// ---------------------------
+// ---------LOJA--------------
+// ---------------------------
+
+
+
+document.getElementById('item_health_buy').addEventListener('click', () => {
+  if (money>=25){
+    money -= 25
+    player.health+=1
+  }
+});
+
+document.getElementById('unlock_rifle_store').addEventListener('click', () => {
+  if (money>=1000){
+    money -= 1000
+    rifleIsUnlocked=true
+  }
+});
+
+document.getElementById('unlock_shotgun_store').addEventListener('click', () => {
+  if (money>=3000){
+    money -= 3000
+    shotgunIsUnlocked=true
+  }
+});
+
+document.getElementById('pistol_ammo_buy').addEventListener('click', () => {
+  if (money>=30){
+    money -= 30
+    if (previous_ammo==="pistol") {
+      current_ammo+=32
+    } else {
+      pistol_ammo+=32
+    }
+    
+  }
+});
+
+document.getElementById('rifle_ammo_buy').addEventListener('click', () => {
+  if (money>=45){
+    money -= 45
+    if (previous_ammo==="rifle") {
+      current_ammo+=24
+    } else {
+      rifle_ammo+=24
+
+    }
+  }
+});
+
+document.getElementById('shotgun_ammo_buy').addEventListener('click', () => {
+  if (money>=60){
+    money -= 60
+    if (previous_ammo==="shotgun") {
+      current_ammo+=6
+    } else {
+      shotgun_ammo+=6
+    }
+  }
+});
+
+document.getElementById('pistol_firerate_buy').addEventListener('click', () => {
+  if (money>=50){
+    money -= 50
+    if (previous_ammo==="pistol") {
+      shootingInterval-=30
+    }
+    pistolshootingInterval-=30
+    
+  }
+});
+
+document.getElementById('rifle_firerate_buy').addEventListener('click', () => {
+  if (money>=75){
+    money -= 75
+    if (previous_ammo==="rifle") {
+      shootingInterval-=15
+    }
+    rifleshootingInterval-=15
+  }
+});
+
+document.getElementById('shotgun_firerate_buy').addEventListener('click', () => {
+  if (money>=100){
+    money -= 100
+    if (previous_ammo==="shotgun") {
+      shootingInterval-=50
+    }
+    shotgunshootingInterval-=50
+  }
+});
+
